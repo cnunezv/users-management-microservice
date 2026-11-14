@@ -19,6 +19,8 @@ public class DataSourceSpringConfig {
   private static final String PROP_DB_USERNAME = "${db.username}";
   private static final String PROP_DB_PASSWORD = "${db.password}";
   private static final String PROP_DB_SSL_MODE = "${db.ssl-mode}";
+  private static final String PROP_DB_POOL_MAX_SIZE = "${db.pool.max-size:10}";
+  private static final String PROP_DB_POOL_MIN_IDLE = "${db.pool.min-idle:2}";
 
   private static final String LOG_DATASOURCE_INIT = "[DataSourceSpringConfig] DataSource inicializado. host={} port={}";
 
@@ -40,6 +42,14 @@ public class DataSourceSpringConfig {
   @Value(PROP_DB_SSL_MODE)
   private String dbSslMode;
 
+  // Los planes gratuitos de MySQL en la nube limitan las conexiones simultáneas
+  // (5 en Clever Cloud DEV), por eso el tamaño del pool es configurable.
+  @Value(PROP_DB_POOL_MAX_SIZE)
+  private int dbPoolMaxSize;
+
+  @Value(PROP_DB_POOL_MIN_IDLE)
+  private int dbPoolMinIdle;
+
   @Bean
   public DataSource dataSource() {
     final DatabaseConfig config =
@@ -49,8 +59,8 @@ public class DataSourceSpringConfig {
     hikariConfig.setJdbcUrl(config.buildJdbcUrl());
     hikariConfig.setUsername(config.username());
     hikariConfig.setPassword(config.password());
-    hikariConfig.setMaximumPoolSize(10);
-    hikariConfig.setMinimumIdle(2);
+    hikariConfig.setMaximumPoolSize(dbPoolMaxSize);
+    hikariConfig.setMinimumIdle(Math.min(dbPoolMinIdle, dbPoolMaxSize));
     hikariConfig.setConnectionTimeout(30_000);
 
     log.info(LOG_DATASOURCE_INIT, dbHost, dbPort);
