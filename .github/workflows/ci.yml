@@ -1,8 +1,13 @@
 # ============================================================
-# Integración continua
+# Integración y despliegue continuo
 #
-#  build: compila el proyecto y ejecuta todas las pruebas unitarias
-#         con Maven sobre JDK 17 (la versión que usa el proyecto).
+#  1. build:  compila y ejecuta todas las pruebas unitarias (JDK 17).
+#  2. smoke:  levanta MySQL vacío, arranca la API con la migración
+#             automática activada y ejecuta la prueba de humo y la
+#             colección de Postman contra la API real.
+#  3. deploy: solo en push a main. Llama al deploy hook de Render si
+#             existe el secreto RENDER_DEPLOY_HOOK_URL
+#             (Settings > Secrets and variables > Actions).
 # ============================================================
 name: CI
 
@@ -35,3 +40,96 @@ jobs:
         with:
           name: surefire-reports
           path: target/surefire-reports/
+
+      - name: Guardar el JAR para la prueba de humo
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/users-management-*.jar
+          retention-days: 1
+
+  smoke:
+    name: Prueba de humo contra MySQL
+    runs-on: ubuntu-latest
+    needs: build
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root_ci_password
+          MYSQL_DATABASE: ci_db
+          MYSQL_USER: ci_user
+          MYSQL_PASSWORD: ci_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot_ci_password --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      PORT: '8080'
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_NAME: ci_db
+      DB_USERNAME: ci_user
+      DB_PASSWORD: ci_password
+      DB_SSL_MODE: DISABLED
+      DB_POOL_MAX_SIZE: '3'
+      DB_POOL_MIN_IDLE: '1'
+      DB_MIGRATE_ON_STARTUP: 'true'
+      JWT_SECRET: Y2ktb25seS1qd3Qtc2VjcmV0LXdpdGgtYXQtbGVhc3QtMzItYnl0ZXM=
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Descargar el JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target
+
+      - name: Arrancar la API (aplica schema.sql sobre la base vacía)
+        run: |
+          nohup java -jar target/users-management-*.jar > app.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/health > /dev/null 2>&1; then
+              echo "API lista tras ${i} intentos"; exit 0
+            fi
+            sleep 2
+          done
+          echo "La API no respondió a tiempo"; cat app.log; exit 1
+
+      - name: Ejecutar la prueba de humo
+        run: BASE_URL=http://localhost:8080 bash tests/smoke.sh
+
+      - name: Ejecutar la colección de Postman con Newman
+        run: |
+          npx --yes newman@6 run postman/CarreraTaxi.postman_collection.json \
+            --env-var base_url=http://localhost:8080 --bail
+
+      - name: Mostrar el log de la API si algo falla
+        if: failure()
+        run: cat app.log
+
+  deploy:
+    name: Despliegue en Render
+    runs-on: ubuntu-latest
+    needs: smoke
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Llamar al deploy hook
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "No hay secreto RENDER_DEPLOY_HOOK_URL: se omite el despliegue."
+            exit 0
+          fi
+          curl -fsS -X POST "$DEPLOY_HOOK_URL" > /dev/null
+          echo "Despliegue solicitado a Render."

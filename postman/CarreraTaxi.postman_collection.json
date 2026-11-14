@@ -1,0 +1,889 @@
+{
+  "info": {
+    "name": "CarreraTaxi - Spring Boot Hexagonal (Ejercicio 19)",
+    "description": "Pruebas de la API REST del CRUDL de carreras de taxi.\n\n1. Ajusta `base_url` (local: http://localhost:8080).\n2. Ejecuta la carpeta **Auth** para obtener los tokens.\n3. Ejecuta **Carreras de taxi** en orden: el registro guarda `carrera_id` para las demás peticiones.\n\nPermisos: consultar con cualquier rol; registrar y actualizar con ADMIN o MEMBER; eliminar solo ADMIN.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{admin_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "member_token",
+      "value": ""
+    },
+    {
+      "key": "reviewer_token",
+      "value": ""
+    },
+    {
+      "key": "carrera_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Verifica que la API responde.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión y guarda el JWT en la variable admin_token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set('admin_token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login MEMBER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión y guarda el JWT en la variable member_token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"member@example.com\",\n  \"password\": \"Member1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set('member_token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login REVIEWER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión y guarda el JWT en la variable reviewer_token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"reviewer@example.com\",\n  \"password\": \"Reviewer1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set('reviewer_token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login cuenta PENDING (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Una cuenta que no está activa no puede iniciar sesión.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pending@example.com\",\n  \"password\": \"Pending1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Carreras de taxi",
+      "item": [
+        {
+          "name": "C - Registrar carrera (MEMBER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi"
+              ]
+            },
+            "description": "Registra una carrera. El id lo genera el servidor y se guarda en carrera_id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"María Fernanda Pájaro\",\n  \"taxi\": \"UAK512\",\n  \"kilometros\": 6.4,\n  \"barrioInicio\": \"El Recreo\",\n  \"barrioLlegada\": \"Centro Histórico\",\n  \"cantidadPasajeros\": 2,\n  \"taxista\": \"Jorge Luis Marrugo\",\n  \"precio\": 14000,\n  \"duracionMinutos\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{member_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', function () { pm.response.to.have.status(201); });",
+                  "const carrera = pm.response.json();",
+                  "pm.collectionVariables.set('carrera_id', carrera.id);",
+                  "pm.test('Normaliza la placa', function () { pm.expect(carrera.taxi).to.eql('UAK512'); });",
+                  "pm.test('Calcula el precio por kilómetro', function () { pm.expect(Number(carrera.precioPorKilometro)).to.eql(2187.5); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "L - Listar carreras",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi"
+              ]
+            },
+            "description": "Lista todas las carreras.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{reviewer_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve un arreglo', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "R - Consultar carrera",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi/{{carrera_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi",
+                "{{carrera_id}}"
+              ]
+            },
+            "description": "Consulta la carrera registrada.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{reviewer_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Es la carrera registrada', function () { pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('carrera_id')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "U - Actualizar carrera (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi/{{carrera_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi",
+                "{{carrera_id}}"
+              ]
+            },
+            "description": "Actualiza barrio de llegada, pasajeros y precio.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"María Fernanda Pájaro\",\n  \"taxi\": \"UAK512\",\n  \"kilometros\": 6.4,\n  \"barrioInicio\": \"El Recreo\",\n  \"barrioLlegada\": \"Bocagrande\",\n  \"cantidadPasajeros\": 3,\n  \"taxista\": \"Jorge Luis Marrugo\",\n  \"precio\": 16000,\n  \"duracionMinutos\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Guarda el nuevo precio', function () { pm.expect(Number(pm.response.json().precio)).to.eql(16000); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "D - Eliminar carrera (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi/{{carrera_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi",
+                "{{carrera_id}}"
+              ]
+            },
+            "description": "Elimina la carrera registrada."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "R - Consultar carrera eliminada (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi/{{carrera_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi",
+                "{{carrera_id}}"
+              ]
+            },
+            "description": "La carrera ya no existe."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validaciones y permisos",
+      "item": [
+        {
+          "name": "Sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi"
+              ]
+            },
+            "description": "Las carreras exigen autenticación.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Placa inválida (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi"
+              ]
+            },
+            "description": "El value object CarreraTaxiTaxi rechaza la placa.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"María Fernanda Pájaro\",\n  \"taxi\": \"12AB\",\n  \"kilometros\": 6.4,\n  \"barrioInicio\": \"El Recreo\",\n  \"barrioLlegada\": \"Centro Histórico\",\n  \"cantidadPasajeros\": 2,\n  \"taxista\": \"Jorge Luis Marrugo\",\n  \"precio\": 14000,\n  \"duracionMinutos\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Explica el formato', function () { pm.expect(pm.response.json().message).to.include('ABC123'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Más de 4 pasajeros (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi"
+              ]
+            },
+            "description": "El value object CarreraTaxiCantidadPasajeros rechaza el valor.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"María Fernanda Pájaro\",\n  \"taxi\": \"UAK512\",\n  \"kilometros\": 6.4,\n  \"barrioInicio\": \"El Recreo\",\n  \"barrioLlegada\": \"Centro Histórico\",\n  \"cantidadPasajeros\": 5,\n  \"taxista\": \"Jorge Luis Marrugo\",\n  \"precio\": 14000,\n  \"duracionMinutos\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kilómetros en cero (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi"
+              ]
+            },
+            "description": "El value object CarreraTaxiKilometros rechaza el valor.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"María Fernanda Pájaro\",\n  \"taxi\": \"UAK512\",\n  \"kilometros\": 0,\n  \"barrioInicio\": \"El Recreo\",\n  \"barrioLlegada\": \"Centro Histórico\",\n  \"cantidadPasajeros\": 2,\n  \"taxista\": \"Jorge Luis Marrugo\",\n  \"precio\": 14000,\n  \"duracionMinutos\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Campos faltantes (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi"
+              ]
+            },
+            "description": "La validación del request rechaza campos vacíos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "REVIEWER intenta registrar (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi"
+              ]
+            },
+            "description": "El rol REVIEWER solo puede consultar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"María Fernanda Pájaro\",\n  \"taxi\": \"UAK512\",\n  \"kilometros\": 6.4,\n  \"barrioInicio\": \"El Recreo\",\n  \"barrioLlegada\": \"Centro Histórico\",\n  \"cantidadPasajeros\": 2,\n  \"taxista\": \"Jorge Luis Marrugo\",\n  \"precio\": 14000,\n  \"duracionMinutos\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{reviewer_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "MEMBER intenta eliminar (403)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi/10000000-0000-0000-0000-000000000001",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi",
+                "10000000-0000-0000-0000-000000000001"
+              ]
+            },
+            "description": "Solo ADMIN elimina carreras.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{member_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Carrera inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/carreras-taxi/no-existe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "carreras-taxi",
+                "no-existe"
+              ]
+            },
+            "description": "CarreraTaxiNotFoundException se traduce a 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
