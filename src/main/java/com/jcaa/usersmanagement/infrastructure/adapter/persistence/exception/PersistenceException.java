@@ -9,6 +9,13 @@ public final class PersistenceException extends RuntimeException {
   private static final String MESSAGE_ALL = "Failed to retrieve all users.";
   private static final String MESSAGE_DELETE = "Failed to delete user with ID: '%s'.";
   private static final String MESSAGE_CONNECTION = "Could not establish database connection.";
+  private static final String MESSAGE_CARRERA_SAVE = "Failed to save carrera de taxi with ID: '%s'.";
+  private static final String MESSAGE_CARRERA_UPDATE =
+      "Failed to update carrera de taxi with ID: '%s'.";
+  private static final String MESSAGE_CARRERA_FIND = "Failed to find carrera de taxi with ID: '%s'.";
+  private static final String MESSAGE_CARRERA_ALL = "Failed to retrieve all carreras de taxi.";
+  private static final String MESSAGE_CARRERA_DELETE =
+      "Failed to delete carrera de taxi with ID: '%s'.";
 
   private PersistenceException(final String message, final Throwable cause) {
     super(message, cause);
@@ -44,5 +51,29 @@ public final class PersistenceException extends RuntimeException {
 
   public static PersistenceException becauseConnectionFailed(final Throwable cause) {
     return new PersistenceException(MESSAGE_CONNECTION, cause);
+  }
+
+  public static PersistenceException becauseCarreraSaveFailed(
+      final String carreraId, final Throwable cause) {
+    return new PersistenceException(String.format(MESSAGE_CARRERA_SAVE, carreraId), cause);
+  }
+
+  public static PersistenceException becauseCarreraUpdateFailed(
+      final String carreraId, final Throwable cause) {
+    return new PersistenceException(String.format(MESSAGE_CARRERA_UPDATE, carreraId), cause);
+  }
+
+  public static PersistenceException becauseCarreraFindByIdFailed(
+      final String carreraId, final Throwable cause) {
+    return new PersistenceException(String.format(MESSAGE_CARRERA_FIND, carreraId), cause);
+  }
+
+  public static PersistenceException becauseCarreraFindAllFailed(final Throwable cause) {
+    return new PersistenceException(MESSAGE_CARRERA_ALL, cause);
+  }
+
+  public static PersistenceException becauseCarreraDeleteFailed(
+      final String carreraId, final Throwable cause) {
+    return new PersistenceException(String.format(MESSAGE_CARRERA_DELETE, carreraId), cause);
   }
 }
