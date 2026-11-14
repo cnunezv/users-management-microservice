@@ -114,7 +114,8 @@ class CarreraTaxiRepositoryMySQLTest {
     final CarreraTaxiModel saved = repository.save(sampleCarrera());
 
     assertEquals(sampleCarrera(), saved);
-    verify(statement).setString(1, ID);
+    // El id se enlaza dos veces: en el INSERT y en el SELECT que relee la fila.
+    verify(statement, times(2)).setString(1, ID);
     verify(statement).setBigDecimal(4, KILOMETROS);
     verify(statement).setInt(7, PASAJEROS);
     verify(statement).setBigDecimal(9, PRECIO);
