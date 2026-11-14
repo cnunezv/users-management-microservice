@@ -5,6 +5,9 @@ import com.jcaa.usersmanagement.domain.model.UserModel;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class JwtTokenService {
 
   private static final String ROLE_CLAIM = "role";
+  private static final int MINIMUM_KEY_BYTES = 32;
 
   private final SecretKey signingKey;
   private final long expirationSeconds;
@@ -28,7 +32,7 @@ public class JwtTokenService {
   }
 
   JwtTokenService(final JwtProperties properties, final Clock clock) {
-    this.signingKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(properties.secret()));
+    this.signingKey = buildSigningKey(properties.secret());
     this.expirationSeconds = properties.expirationSeconds();
     this.clock = clock;
   }
@@ -58,5 +62,36 @@ public class JwtTokenService {
 
   public long expirationSeconds() {
     return expirationSeconds;
+  }
+
+  /**
+   * Construye la llave HMAC a partir del secreto configurado.
+   *
+   * <p>Si el secreto es Base64 de al menos 32 bytes se usa tal cual (comportamiento original). Si
+   * no lo es, por ejemplo el valor aleatorio de 32 caracteres que genera Render, se deriva una llave
+   * de 32 bytes con SHA-256 en lugar de impedir que la aplicación arranque.
+   */
+  static SecretKey buildSigningKey(final String secret) {
+    final byte[] decoded = decodeBase64OrNull(secret);
+    if (decoded != null && decoded.length >= MINIMUM_KEY_BYTES) {
+      return Keys.hmacShaKeyFor(decoded);
+    }
+    return Keys.hmacShaKeyFor(sha256(secret.getBytes(StandardCharsets.UTF_8)));
+  }
+
+  private static byte[] decodeBase64OrNull(final String secret) {
+    try {
+      return Base64.getDecoder().decode(secret);
+    } catch (final IllegalArgumentException notBase64) {
+      return null;
+    }
+  }
+
+  private static byte[] sha256(final byte[] input) {
+    try {
+      return MessageDigest.getInstance("SHA-256").digest(input);
+    } catch (final NoSuchAlgorithmException exception) {
+      throw new IllegalStateException("SHA-256 no está disponible en la JVM.", exception);
+    }
   }
 }

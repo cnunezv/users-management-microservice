@@ -86,4 +86,31 @@ class JwtTokenServiceTest {
         UserRole.ADMIN,
         UserStatus.ACTIVE);
   }
+
+  @Test
+  void shouldDeriveKeyWhenSecretIsShortOrNotBase64() {
+    // Arrange: valores como los que genera Render (32 caracteres aleatorios)
+    final String[] secrets = {"Q2xhdmVDb3J0YUJhc2U2NDEyMzQ1Njc4", "no es base64 y es corto!"};
+
+    for (final String secret : secrets) {
+      final JwtTokenService service =
+          new JwtTokenService(
+              new JwtProperties(secret, EXPIRATION_SECONDS), Clock.fixed(NOW, ZoneOffset.UTC));
+
+      // Act
+      final JwtPrincipal principal = service.parse(service.generate(activeUser()));
+
+      // Assert
+      assertThat(principal.userId()).isEqualTo("user-001");
+    }
+  }
+
+  @Test
+  void shouldKeepUsingBase64KeyWhenItIsLongEnough() {
+    // Arrange
+    final byte[] expected = Base64.getDecoder().decode(SECRET);
+
+    // Act & Assert
+    assertThat(JwtTokenService.buildSigningKey(SECRET).getEncoded()).isEqualTo(expected);
+  }
 }
