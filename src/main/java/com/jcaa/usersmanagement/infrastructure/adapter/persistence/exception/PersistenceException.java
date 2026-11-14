@@ -14,6 +14,7 @@ public final class PersistenceException extends RuntimeException {
       "Failed to update carrera de taxi with ID: '%s'.";
   private static final String MESSAGE_CARRERA_FIND = "Failed to find carrera de taxi with ID: '%s'.";
   private static final String MESSAGE_CARRERA_ALL = "Failed to retrieve all carreras de taxi.";
+  private static final String MESSAGE_MIGRATION = "Failed to apply the database migration.";
   private static final String MESSAGE_CARRERA_DELETE =
       "Failed to delete carrera de taxi with ID: '%s'.";
 
@@ -75,5 +76,9 @@ public final class PersistenceException extends RuntimeException {
   public static PersistenceException becauseCarreraDeleteFailed(
       final String carreraId, final Throwable cause) {
     return new PersistenceException(String.format(MESSAGE_CARRERA_DELETE, carreraId), cause);
+  }
+
+  public static PersistenceException becauseMigrationFailed(final Throwable cause) {
+    return new PersistenceException(MESSAGE_MIGRATION, cause);
   }
 }
