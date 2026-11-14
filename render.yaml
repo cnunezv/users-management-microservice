@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: users-management-api
+    name: carrera-taxi-spring
     runtime: docker
     plan: free
     branch: main
@@ -12,13 +12,21 @@ services:
       - key: DB_PORT
         sync: false
       - key: DB_NAME
-        value: crud_usuarios
+        sync: false
       - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
         sync: false
       - key: DB_SSL_MODE
-        value: REQUIRED
+        value: PREFERRED
+      # El plan DEV de MySQL en Clever Cloud admite 5 conexiones simultáneas.
+      - key: DB_POOL_MAX_SIZE
+        value: "3"
+      - key: DB_POOL_MIN_IDLE
+        value: "1"
+      # Aplica schema.sql al arrancar (crea tablas, admin y datos de ejemplo).
+      - key: DB_MIGRATE_ON_STARTUP
+        value: "true"
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
